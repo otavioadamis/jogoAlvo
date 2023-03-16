@@ -1,0 +1,243 @@
+<html>
+<head>
+<meta charset=utf-8 />
+<title>Mira cavala</title>
+<style>
+  #rank
+  {
+    position: absolute;
+    top: 0px;
+    right: 50%;
+  }
+  #startbutton
+  {
+    position: absolute;
+    top: 50%;
+    right: 50%;
+    
+    width: 200px;
+    height: 50px;
+    font-size: 20px;
+  }
+</style>
+</head>
+<div>
+<canvas id="circle" width="900" height="500"></canvas>
+</div>
+    <div>
+      <button type="button" id="startbutton" onclick="jogar()">COMEÇAR</button>
+    </div>
+    <div id = "rank">
+      <h1> Jogo da Bolinha.
+      <br> Tente acertar a bolinha antes de ela desaparecer.
+      <br> Cada acerto lhe dará 15 pontos.
+      <br>
+      <br> Boa sorte! </h1>
+    </div>
+</body>
+</html>
+
+<script>
+var ranking = document.getElementById('rank');
+var botao =  document.getElementById('startbutton');
+var canvas = document.getElementById('circle');
+
+var pontos;	
+var contador;
+var tentativas;
+var nome = prompt("Qual seu nome?")
+//Ranking
+var rank = JSON.parse(localStorage.getItem("rank"))
+if (!rank) {
+	rank = {"jogadores": [{"Nome": nome, "Pontos": pontos}]};
+}else{
+	var i
+	for(var i = 0; i<rank.jogadores.length; i++)
+	{
+		if (rank.jogadores[i].Nome == nome){
+      break;
+		}
+	}
+	if (i == rank.jogadores.length)
+		rank.jogadores.push({"Nome": nome, "Pontos": pontos});
+}
+
+localStorage.setItem("rank", JSON.stringify(rank));
+
+function atualizarank()
+{
+  var lista = document.getElementById('rank');
+  lista.innerHTML = "";
+  if(rank.jogadores)
+  {
+    for(var i = 0; i<rank.jogadores.length; i++)
+    {
+      rank.jogadores.sort(ordem)
+      lista.innerHTML += "nome: " + rank.jogadores[i].Nome + " || Pontuação: " + rank.jogadores[i].Pontos + "<hr>"
+    }
+  }
+}
+function ordem(a,b)
+{
+return b.Pontos - a.Pontos
+}
+
+function jogar(){
+pontos = 0;
+contador = 0;
+tentativas = 5;
+
+botao.style.display = 'none'
+ranking.style.display = 'none'
+canvas.style.display = 'inline'
+//verificar fim do jogo
+function fimdejogo()
+{
+	if(tentativas == 0)
+	{
+		 for(var i = 0; i<rank.jogadores.length; i++)
+		{
+			if (rank.jogadores[i].Nome == nome){
+          if(rank.jogadores[i].Pontos > pontos)
+          {
+            break;
+          }
+				rank.jogadores[i].Pontos = pontos;
+				localStorage.setItem("rank", JSON.stringify(rank));
+				break;
+			}
+		}
+		canvas.style.display = 'none'
+		ranking.style.display = 'inline'
+		atualizarank();
+  }
+}
+//alvo
+alvo = canvas.getContext('2d');
+//Background
+bg = canvas.getContext('2d');
+
+fundodust = new Image();
+fundodust.src = 'dust2 kk.jpg';
+bg.drawImage(fundodust, 0, 0, 900, 500);
+
+//mudar posiçao da bola
+function atualizapos() 
+  {
+  PosX = 20 + (Math.random() * 750)
+  PosY = 20 + (Math.random() * 350)
+  dx = -dx;
+  dy = -dy;
+  contador = 0;
+  }
+//velocidade de movimento
+dx = 2;
+dy = 2;
+//posiçao inicial
+PosX = 20 + (Math.random() * 750)
+PosY = 20 + (Math.random() * 350)
+//Movimento da bola
+setInterval (function movimento() {
+fundodust.src = 'dust2 kk.jpg';
+bg.drawImage(fundodust, 0, 0, 900, 500);
+ 
+  PosX += dx;
+  PosY += dy;
+    if(PosX>880)
+      {
+      dx = -3;
+      }
+    if(PosX<20)
+      {
+      dx = 3;
+      }
+    if(PosY>480)
+      {
+      dy = -3;
+      }
+    if(PosY<20)
+      {
+      dy = 3;
+      }
+alvo.beginPath();
+alvo.arc(PosX, PosY, 20, 0, 2 * Math.PI, false);
+alvo.lineWidth = 3;
+alvo.fillStyle = '#A52A2A';
+alvo.fill();
+//pontos
+alvo.fillStyle = "white"
+alvo.fillText("pontuaçao: " + pontos, 820, 25, 75, 30);
+//tentativas
+alvo.fillStyle = "white"
+alvo.fillText("tentativas: " + tentativas, 820, 65, 75, 30)
+}, 20)
+
+//MouseClick
+setInterval (function mouse()
+  {
+    var Mouse = document.getElementById('circle');
+    var context = Mouse.getContext('2d');
+    Mouse.addEventListener('mousedown', onDown, false);
+  }, 
+  200)
+
+function onDown(event)
+{ 
+var mouseX = event.clientX;
+var mouseY = event.clientY;
+console.log(mouseX, mouseY);
+
+var d = Math.sqrt((mouseX-PosX)*(mouseX-PosX) + (mouseY-PosY)*(mouseY-PosY));
+  if(d < 20) 
+  {
+    console.log("Boa!")
+    pontos+= 15;
+    setTimeout(atualizapos(), 150);
+    console.log("Pontos = " + pontos)
+  }
+  if(d > 20)
+  {
+    console.log("errou!")
+  }
+}
+
+//Timer 
+setInterval(function timer() { 
+  if(contador == 2)
+  {
+    atualizapos();
+    contador = 0;
+    console.log("lento demais!")
+    tentativas--
+	fimdejogo()
+  }
+  else
+  {
+    contador++;
+  }
+}, 340);
+}
+
+
+
+
+
+
+//ajuda botao : https://www.youtube.com/watch?v=T_F7xL7wpew
+
+//criar a bola (X)
+//Criar um background (X)
+//Fazer a bola se mover (X)
+//Reconhecer o clique em cima da bola vermelha (X)
+//Fazer a bola aparecer em cantos aleatórios do canvas(X)
+//Fazer a bola se mover para direçoes aleatórias assim que aparecer(X)
+//Fazer a bola desaparecer se nao houver click(X)
+//Mostrar a pontuação mostrar na tela (X)
+//Criar botao pra iniciar jogo (X)
+//Reposicionar o botao (X)
+//Funçao para finalizar o jogo(X)
+//Mostrar ranking com pontuaçoes(X)
+//Ranking no LocalStorage(X)
+//Decoraçao (to com preguiçaAAAAAAAAAAAAAAAAAAAAA)
+//-----------FIM--------------
+</script>
